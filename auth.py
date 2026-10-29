@@ -46,13 +46,12 @@ def wait_if_locked(user, data, save_data):
 
     while time.time() < until:
         left = int(until - time.time())
-        if left < 10:
-            print("Please wait: 00:0" + str(left))
-        else:
-            print("Please wait: 00:" + str(left))
+        # \033[K clears the line so no old characters stick around
+        print(f"\rPlease wait: 00:{left:02d}\033[K", end="", flush=True)
         time.sleep(1)
 
-    print("You may try again.")
+    # Clear the countdown line completely and print the final message cleanly
+    print("\rYou may try again.\033[K")
 
     user["lockout_until"] = None
     save_data(data)
