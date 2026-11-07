@@ -1,5 +1,5 @@
 import json
-import os 
+import os
 
 DATA_PATH = "data/bank_data.json"
 
@@ -26,9 +26,10 @@ def load_data(path=DATA_PATH):          # It is for loading last changes after s
         return _default_data()
 
 def save_data(data, path = DATA_PATH):       # This function is for saving the changes in database for next start of program.
-    os.makedirs("data", exist_ok=True)
+    directory = os.path.dirname(path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
     tmp_path = path + ".tmp"
     with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
     os.replace(tmp_path, path)
-
