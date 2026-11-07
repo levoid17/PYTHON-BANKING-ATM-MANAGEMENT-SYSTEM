@@ -1,12 +1,10 @@
-from datetime import date, datetime
-import math
-
-
 DAILY_DEPOSIT_LIMIT = 2000.00
 DAILY_WITHDRAWAL_LIMIT = 1000.00
 DAILY_TRANSFER_LIMIT = 5
 FEE_FREE_WITHDRAWAL_ALLOWANCE = 500.00
 WITHDRAWAL_FEE_RATE = 0.02
+MAX_DAILY_TRANSFERS = 5
+HISTORY_LIMIT = 20
 
 
 def _read_amount(prompt):
@@ -142,84 +140,3 @@ def withdraw_money(username, current_balance, today_withdrawals, atm_cash, user=
     print(f"Amount deducted from account: {total_deduction:.2f} AZN")
     print(f"New account balance: {current_balance:.2f} AZN")
     return current_balance, today_withdrawals, atm_cash
-
-
-def transfer_money(data, username):
-    sender = data["users"][username]
-    recipient_key = input("Recipient username or account number: ").strip()
-    recipient_name = next(
-        (
-            name
-            for name, candidate in data["users"].items()
-            if name == recipient_key or candidate.get("account_number") == recipient_key
-        ),
-        None,
-    )
-    if recipient_name is None:
-        print("Transfer declined: recipient was not found.")
-        return False
-    if recipient_name == username:
-        print("Transfer declined: you cannot transfer money to yourself.")
-        return False
-
-    transfer_count = sender.get("daily_transfers", 0)
-    if transfer_count >= DAILY_TRANSFER_LIMIT:
-        print("Transfer declined: daily transfer limit would be exceeded.")
-        return False
-
-    amount = _read_amount("Transfer amount: ")
-    if amount is None:
-        return False
-    if sender["balance"] < amount:
-        print("Transfer declined: insufficient balance.")
-        return False
-
-    recipient = data["users"][recipient_name]
-    sender["balance"] = round(sender["balance"] - amount, 2)
-    recipient["balance"] = round(recipient["balance"] + amount, 2)
-    sender["daily_transfers"] = transfer_count + 1
-    _record_transaction(
-        sender,
-        "TRANSFER OUT",
-        amount,
-        f"Transfer to {recipient_name}",
-        sender["balance"],
-    )
-    _record_transaction(
-        recipient,
-        "TRANSFER IN",
-        amount,
-        f"Transfer from {username}",
-        recipient["balance"],
-    )
-    print(
-        f"Transfer successful: {amount:.2f} AZN sent to "
-        f"{recipient_name}. New balance: {sender['balance']:.2f} AZN"
-    )
-    return True
-
-
-def display_transaction_history(user):
-    history = user.get("history", [])
-    print("\nTRANSACTION HISTORY")
-    if not history:
-        print("No transactions found.")
-        return
-
-    for transaction in reversed(history):
-        print(
-            f"{transaction.get('date', 'Unknown date')} | "
-            f"{transaction.get('type', 'TRANSACTION')} | "
-            f"{transaction.get('amount', 0.0):.2f} AZN | "
-            f"{transaction.get('description', '')} | "
-            f"Balance: {transaction.get('balance', 0.0):.2f} AZN"
-        )
-
-
-def reset_daily_counters(user):
-    today = date.today().isoformat()
-    if user.get("daily_reset_date") != today:
-        user["today_deposits"] = 0.0
-        user["today_withdrawals"] = 0.0
-        user["daily_transfers"] = 0
-        user["daily_reset_date"] = today
