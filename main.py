@@ -1,9 +1,13 @@
 from auth import change_password, login
 from storage import load_data, save_data
 from transactions import (
+    add_transaction_entry,
+    check_balance,
     deposit_money,
     display_account_info,
     display_daily_limits,
+    show_transaction_history,
+    transfer_money,
     withdraw_money,
 )
 
@@ -17,6 +21,29 @@ def initialize_user_defaults(data):
         user.setdefault("lockout_until", None)
         user.setdefault("today_deposits", 0.0)
         user.setdefault("today_withdrawals", 0.0)
+        user.setdefault("history", [])
+        user.setdefault("daily_transfers", 0)
+        user.setdefault("daily_transfer_date", None)
+        user.setdefault("last_transaction_time", None)
+        user.setdefault("next_txn_id", 1)
+
+
+def show_main_menu(username):
+    print("====================================")
+    print(" PYTHON BANKING SYSTEM")
+    print("====================================")
+    print(f"Welcome, {username}!")
+    print("1. View Account Information")
+    print("2. Check Balance")
+    print("3. Deposit Money")
+    print("4. Withdraw Money")
+    print("5. Transfer Money")
+    print("6. Transaction History")
+    print("7. Daily Limits")
+    print("8. Change Password")
+    print("9. Logout")
+    print("0. Exit")
+    print("====================================")
 
 
 def main():
@@ -24,87 +51,93 @@ def main():
     initialize_user_defaults(data)
     save_data(data)
 
-    print("=== Welcome to VTB ATM ===")
-
-    username = login(data, save_data)
-    if username is None:
-        print("Exiting system...")
-        return
-
-    user = data["users"][username]
-    print(f"\nSuccessfully logged in. Welcome, {username}.")
-
     while True:
-        print("\n--- MAIN MENU ---")
-        print("1. View Account Information")
-        print("2. Deposit Money")
-        print("3. Withdraw Money")
-        print("4. View Daily Limits")
-        print("5. Change Password")
-        print("6. Transfer Money")
-        print("7. Transaction History")
-        print("8. Mini Statement")
-        print("9. Card Services")
-        print("10. Exit")
+        username = login(data, save_data)
+        if username is None:
+            print("Exiting system...")
+            return
 
-        choice = input("Enter your choice (1-10): ").strip()
+        user = data["users"][username]
+        print(f"\nSuccessfully logged in. Welcome, {username}.")
 
-        if choice == "1":
-            display_account_info(
-                username=username,
-                account_number=user["account_number"],
-                balance=user["balance"],
-                status=user.get("status", "active"),
-            )
+        while True:
+            show_main_menu(username)
+            choice = input("Select an option: ").strip()
 
-        elif choice == "2":
-            user["balance"], user["today_deposits"], data["atm_cash"] = deposit_money(
-                username=username,
-                current_balance=user["balance"],
-                today_deposits=user.get("today_deposits", 0.0),
-                atm_cash=data.get("atm_cash", 0.0),
-            )
-            save_data(data)
+            if choice == "1":
+                display_account_info(
+                    username=username,
+                    account_number=user["account_number"],
+                    balance=user["balance"],
+                    status=user.get("status", "active"),
+                )
 
-        elif choice == "3":
-            user["balance"], user["today_withdrawals"], data["atm_cash"] = withdraw_money(
-                username=username,
-                current_balance=user["balance"],
-                today_withdrawals=user.get("today_withdrawals", 0.0),
-                atm_cash=data.get("atm_cash", 0.0),
-            )
-            save_data(data)
+            elif choice == "2":
+                check_balance(user["balance"])
 
-        elif choice == "4":
-            display_daily_limits(
-                today_deposits=user.get("today_deposits", 0.0),
-                today_withdrawals=user.get("today_withdrawals", 0.0),
-                outgoing_transfers=user.get("daily_transfers", 0),
-            )
+            elif choice == "3":
+                old_balance = user["balance"]
+                user["balance"], user["today_deposits"], data["atm_cash"] = deposit_money(
+                    username=username,
+                    current_balance=user["balance"],
+                    today_deposits=user.get("today_deposits", 0.0),
+                    atm_cash=data.get("atm_cash", 0.0),
+                )
+                if user["balance"] > old_balance:
+                    add_transaction_entry(
+                        user,
+                        "deposit",
+                        user["balance"] - old_balance,
+                        "cash deposit",
+                    )
+                save_data(data)
 
-        elif choice == "5":
-            if change_password(data, username, save_data):
-                print("Please log in again with your new password.")
+            elif choice == "4":
+                old_balance = user["balance"]
+                user["balance"], user["today_withdrawals"], data["atm_cash"] = withdraw_money(
+                    username=username,
+                    current_balance=user["balance"],
+                    today_withdrawals=user.get("today_withdrawals", 0.0),
+                    atm_cash=data.get("atm_cash", 0.0),
+                )
+                if user["balance"] < old_balance:
+                    add_transaction_entry(
+                        user,
+                        "withdrawal",
+                        old_balance - user["balance"],
+                        "cash withdrawal",
+                    )
+                save_data(data)
+
+            elif choice == "5":
+                if transfer_money(data, username):
+                    save_data(data)
+
+            elif choice == "6":
+                show_transaction_history(user)
+
+            elif choice == "7":
+                display_daily_limits(
+                    today_deposits=user.get("today_deposits", 0.0),
+                    today_withdrawals=user.get("today_withdrawals", 0.0),
+                    outgoing_transfers=user.get("daily_transfers", 0),
+                )
+
+            elif choice == "8":
+                if change_password(data, username, save_data):
+                    print("Please log in again with your new password.")
+                    break
+
+            elif choice == "9":
+                print("Logged out successfully.")
                 break
 
-        elif choice == "6":
-            print("Transfer module is not integrated yet in this branch.")
+            elif choice == "0":
+                print("Thank you for using our ATM. Goodbye!")
+                return
 
-        elif choice == "7":
-            print("Transaction history module is not integrated yet in this branch.")
-
-        elif choice == "8":
-            print("Mini statement module is not integrated yet in this branch.")
-
-        elif choice == "9":
-            print("Card services module is not integrated yet in this branch.")
-
-        elif choice == "10":
-            print("Thank you for using our ATM. Goodbye!")
-            break
-
-        else:
-            print("Invalid choice. Please select a number between 1 and 10.")
+            else:
+                print("Invalid choice. Please select a valid option.")
 
 
 if __name__ == "__main__":
