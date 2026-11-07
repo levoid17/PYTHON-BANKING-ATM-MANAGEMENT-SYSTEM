@@ -41,9 +41,13 @@ def main():
         print("3. Withdraw Money")
         print("4. View Daily Limits")
         print("5. Change Password")
-        print("6. Exit")
+        print("6. Transfer Money")
+        print("7. Transaction History")
+        print("8. Mini Statement")
+        print("9. Card Services")
+        print("10. Exit")
 
-        choice = input("Enter your choice (1-6): ").strip()
+        choice = input("Enter your choice (1-10): ").strip()
 
         if choice == "1":
             display_account_info(
@@ -84,11 +88,23 @@ def main():
                 break
 
         elif choice == "6":
+            print("Transfer module is not integrated yet in this branch.")
+
+        elif choice == "7":
+            print("Transaction history module is not integrated yet in this branch.")
+
+        elif choice == "8":
+            print("Mini statement module is not integrated yet in this branch.")
+
+        elif choice == "9":
+            print("Card services module is not integrated yet in this branch.")
+
+        elif choice == "10":
             print("Thank you for using our ATM. Goodbye!")
             break
 
         else:
-            print("Invalid choice. Please select a number between 1 and 6.")
+            print("Invalid choice. Please select a number between 1 and 10.")
 
 
 if __name__ == "__main__":
