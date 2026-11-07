@@ -114,7 +114,7 @@ def change_password(data, username, save_data):
 
     message = check_new_password(new_password)
     if message != "":
-        print(message)
+        print("Password does not meet security requirements.")
         return False
 
     if new_password == user["password"]:
