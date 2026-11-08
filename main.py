@@ -30,7 +30,7 @@ def initialize_user_defaults(data):
 
 def show_main_menu(username):
     print("====================================")
-    print(" PYTHON BANKING SYSTEM")
+    print(" Bank of GrandMasters ")
     print("====================================")
     print(f"Welcome, {username}!")
     print("1. View Account Information")
