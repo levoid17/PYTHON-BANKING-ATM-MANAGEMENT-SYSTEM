@@ -1,0 +1,26 @@
+{
+    "user01": {
+        "password_hash": "8776f108e247ab1e2b323042c049c266407c81fbad41bde1e8dfc1bb66fd267e",
+        "failed_attempts": 0,
+        "lockout_until": null,
+        "is_blocked": false,
+        "balance": 2500.0,
+        "transaction_history": []
+    },
+    "user02": {
+        "password_hash": "d55f4c24a17c7614cfc1d8c20d972d91a465b07057f019927031ae28fc3d8654",
+        "failed_attempts": 0,
+        "lockout_until": null,
+        "is_blocked": false,
+        "balance": 2500.0,
+        "transaction_history": []
+    },
+    "user03": {
+        "password_hash": "8a8fd9f66ff76402e43153f378c7eb88630434e3a0bc174e1dfde05c28a0439c",
+        "failed_attempts": 0,
+        "lockout_until": null,
+        "is_blocked": false,
+        "balance": 2500.0,
+        "transaction_history": []
+    }
+}
