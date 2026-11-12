@@ -1,3 +1,5 @@
+from storage import today_str       #* Used for getting the current date, will be used in transfer validation and daily limit checks.
+
 
 def display_account_info(username, account_number, balance, status="Active"):
     """05. Account information and balance[cite: 5]"""
@@ -132,3 +134,9 @@ def withdraw_money(username, current_balance, today_withdrawals, atm_cash):
     except ValueError:
         print("\nWithdrawal declined: please enter a valid number format[cite: 15].")
         return current_balance, today_withdrawals, atm_cash
+
+def get_today_transfer_count(sender_data):
+    """Returns the number of transfers made today by the sender."""
+    if sender_data["daily_transfer_date"] != today_str():
+        return 0 
+    return sender_data["daily_transfers"]
