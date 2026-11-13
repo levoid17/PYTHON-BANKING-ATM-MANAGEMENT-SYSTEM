@@ -11,6 +11,29 @@ LOCK_SECONDS = 60
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
+
+def _users(data):
+    return data.get("users", data)
+
+
+def _is_blocked(user):
+    return user.get("blocked", user.get("is_blocked", False))
+
+
+def _set_blocked(user, value):
+    if "blocked" in user:
+        user["blocked"] = value
+    else:
+        user["is_blocked"] = value
+
+
+def _password_matches(user, password):
+    password_hash = user.get("password_hash")
+    if password_hash is not None:
+        return hashlib.sha256(password.encode("utf-8")).hexdigest() == password_hash
+    return password == user.get("password")
+
+
 def check_new_password(password):
     if len(password) < 8:
         return "Password must be at least 8 characters long."
@@ -67,14 +90,15 @@ def wait_if_locked(user, data, save_data):
 
 def login(data, save_data):
     username = input("Username: ").strip()
+    users = _users(data)
 
-    if username not in data:
+    if username not in users:
         print("Invalid username or password.")
         return None
 
-    user = data[username]
+    user = users[username]
 
-    if user.get("is_blocked", False):
+    if _is_blocked(user):
         print("Maximum login attempts exceeded.")
         print("Your card has been blocked.")
         print("Please contact the bank administrator.")
@@ -86,11 +110,13 @@ def login(data, save_data):
         password = input("Password: ")
         hashed_input = hash_password(password)
 
-        if hashed_input == user["password_hash"]:
+        if _password_matches(user, password):
+            user["password_hash"] = hashed_input
+            user.pop("password", None)
             user["failed_attempts"] = 0
             user["lockout_until"] = None
             save_data(data)
-            print(f"Uğurlu giriş! Xoş gəldiniz, {username}.")
+            print(f"Successfully logged in. Welcome, {username}.")
             return username
 
         user["failed_attempts"] = user.get("failed_attempts", 0) + 1
@@ -98,7 +124,7 @@ def login(data, save_data):
         print("Incorrect password. Attempt: " + str(attempts) + "/" + str(MAX_ATTEMPTS))
 
         if attempts >= MAX_ATTEMPTS:
-            user["is_blocked"] = True
+            _set_blocked(user, True)
             user["lockout_until"] = None
             save_data(data)
             print("Maximum login attempts exceeded.")
@@ -115,10 +141,10 @@ def login(data, save_data):
         save_data(data)
 
 def change_password(data, username, save_data):
-    user = data[username]
+    user = _users(data)[username]
 
     current = input("Enter current password: ")
-    if hash_password(current) != user["password_hash"]:
+    if not _password_matches(user, current):
         print("Current password is incorrect.")
         return False
 
@@ -129,7 +155,7 @@ def change_password(data, username, save_data):
         print("Password does not meet security requirements.")
         return False
 
-    if hash_password(new_password) == user["password_hash"]:
+    if hash_password(new_password) == user.get("password_hash"):
         print("New password must be different from the old password.")
         return False
 

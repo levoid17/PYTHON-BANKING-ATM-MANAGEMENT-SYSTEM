@@ -1,15 +1,27 @@
 import json
 import os
+import hashlib
+from datetime import date
 
 DATA_PATH = "data/bank_data.json"
+
+
+def today_str():
+    return date.today().isoformat()
+
+
+def _password_hash(password):
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
 
 def _default_data():            # If data is not found in database, it uses default demo accounts
     return {
         "atm_cash": 5000.00,
+        "next_txn_id": 1,
         "users": {
-            "user01": {"account_number": "10010001", "password": "Test@123", "balance": 2500.00, "status": "active", "history": [], "daily_transfers": 0, "daily_transfer_date": None, "last_login": None, "last_transaction_time": None, "next_txn_id": 1},
-            "user02": {"account_number": "10010002", "password": "Test@456", "balance": 1500.00, "status": "active", "history": [], "daily_transfers": 0, "daily_transfer_date": None, "last_login": None, "last_transaction_time": None, "next_txn_id": 2},
-            "user03": {"account_number": "10010003", "password": "Test@789", "balance": 3000.00, "status": "active", "history": [], "daily_transfers": 0, "daily_transfer_date": None, "last_login": None, "last_transaction_time": None, "next_txn_id": 3},
+            "user01": {"account_number": "10010001", "password_hash": _password_hash("Test@123"), "balance": 2500.00, "status": "active", "history": [], "daily_transfers": 0, "daily_transfer_date": None, "last_login": None, "last_transaction_time": None, "next_txn_id": 1},
+            "user02": {"account_number": "10010002", "password_hash": _password_hash("Test@456"), "balance": 1500.00, "status": "active", "history": [], "daily_transfers": 0, "daily_transfer_date": None, "last_login": None, "last_transaction_time": None, "next_txn_id": 1},
+            "user03": {"account_number": "10010003", "password_hash": _password_hash("Test@789"), "balance": 3000.00, "status": "active", "history": [], "daily_transfers": 0, "daily_transfer_date": None, "last_login": None, "last_transaction_time": None, "next_txn_id": 1},
         },
     }
 
@@ -20,7 +32,9 @@ def load_data(path=DATA_PATH):          # It is for loading last changes after s
         return data
     try:
         with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            data.setdefault("next_txn_id", 1)
+            return data
     except json.JSONDecodeError:
         print("Error: Data file is damaged. Starting with default data")
         return _default_data()

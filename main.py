@@ -8,6 +8,7 @@ from transactions import (
     display_daily_limits,
     show_transaction_history,
     transfer_money,
+    reset_daily_counters,
     withdraw_money,
 )
 
@@ -58,6 +59,8 @@ def main():
             return
 
         user = data["users"][username]
+        reset_daily_counters(user)
+        save_data(data)
         print(f"\nSuccessfully logged in. Welcome, {username}.")
 
         while True:

@@ -1,4 +1,5 @@
 from datetime import date, datetime
+import math
 
 DAILY_DEPOSIT_LIMIT = 2000.00
 DAILY_WITHDRAWAL_LIMIT = 1000.00
@@ -16,7 +17,7 @@ def _read_amount(prompt):
         print("Transaction declined: please enter a valid number.")
         return None
 
-    if amount <= 0:
+    if not math.isfinite(amount) or amount <= 0:
         print("Transaction declined: amount must be greater than zero.")
         return None
 
@@ -24,7 +25,7 @@ def _read_amount(prompt):
         print("Transaction declined: maximum two decimal places are allowed.")
         return None
 
-    return amount
+    return round(amount, 2)
 
 
 def display_account_info(username, account_number, balance, status="Active"):
@@ -47,6 +48,15 @@ def display_daily_limits(today_deposits, today_withdrawals, outgoing_transfers=0
     print(f"Cash withdrawal remaining: {withdrawal_remaining:.2f} AZN")
     print(f"Fee-free cash remaining: {fee_free_remaining:.2f} AZN")
     print(f"Outgoing transfers: {outgoing_transfers}/5")
+
+
+def reset_daily_counters(user):
+    today = date.today().isoformat()
+    if user.get("daily_reset_date") != today:
+        user["today_deposits"] = 0.0
+        user["today_withdrawals"] = 0.0
+        user["daily_transfers"] = 0
+        user["daily_reset_date"] = today
 
 
 def deposit_money(username, current_balance, today_deposits, atm_cash):
@@ -167,8 +177,8 @@ def transfer_money(data, sender_username):
         print("Transfer declined: insufficient balance.")
         return False
 
-    sender["balance"] -= amount
-    recipient["balance"] += amount
+    sender["balance"] = round(sender["balance"] - amount, 2)
+    recipient["balance"] = round(recipient["balance"] + amount, 2)
     sender["daily_transfers"] = sender.get("daily_transfers", 0) + 1
     sender["daily_transfer_date"] = today
 
@@ -199,6 +209,7 @@ def show_transaction_history(user):
     print("\nTRANSACTION HISTORY")
     for item in reversed(history[-10:]):
         print(
-            f"[{item.get('id')}] {item.get('time')} | {item.get('type')} | "
+            f"[{item.get('id')}] {item.get('time', item.get('date', ''))} | "
+            f"{item.get('type')} | "
             f"{item.get('amount', 0.0):.2f} AZN | {item.get('details', '')}"
         )
