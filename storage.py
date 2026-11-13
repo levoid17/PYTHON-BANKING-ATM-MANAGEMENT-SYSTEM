@@ -3,7 +3,8 @@ import os
 import hashlib
 from datetime import date
 
-DATA_PATH = "data/bank_data.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "data", "bank_data.json")
 
 
 def today_str():
