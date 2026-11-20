@@ -30,7 +30,8 @@ def _set_blocked(user, value):
 def _password_matches(user, password):
     password_hash = user.get("password_hash")
     if password_hash is not None:
-        return hashlib.sha256(password.encode("utf-8")).hexdigest() == password_hash
+        if hashlib.sha256(password.encode("utf-8")).hexdigest() == password_hash:
+            return True
     return password == user.get("password")
 
 
@@ -89,22 +90,22 @@ def wait_if_locked(user, data, save_data):
     save_data(data)
 
 def login(data, save_data):
-    username = input("Username: ").strip()
-    users = _users(data)
-
-    if username not in users:
-        print("Invalid username or password.")
-        return None
-
-    user = users[username]
-
-    if _is_blocked(user):
-        print("Maximum login attempts exceeded.")
-        print("Your card has been blocked.")
-        print("Please contact the bank administrator.")
-        return None
-
     while True:
+        username = input("Username: ").strip()
+        users = _users(data)
+
+        if username not in users:
+            print("Invalid username or password.")
+            return None
+
+        user = users[username]
+
+        if _is_blocked(user):
+            print("Maximum login attempts exceeded.")
+            print("Your card has been blocked.")
+            print("Please contact the bank administrator.")
+            return None
+
         wait_if_locked(user, data, save_data)
 
         password = input("Password: ")
@@ -112,7 +113,6 @@ def login(data, save_data):
 
         if _password_matches(user, password):
             user["password_hash"] = hashed_input
-            user.pop("password", None)
             user["failed_attempts"] = 0
             user["lockout_until"] = None
             save_data(data)
@@ -132,7 +132,6 @@ def login(data, save_data):
             print("Please contact the bank administrator.")
             return None
 
-        # 3-cü cəhddə təkrar çap olunmaması üçün birbaşa vaxtı təyin edirik
         if attempts == LOCK_AFTER_ATTEMPTS:
             user["lockout_until"] = datetime.now().timestamp() + LOCK_SECONDS
             save_data(data)
@@ -164,7 +163,9 @@ def change_password(data, username, save_data):
         print("Passwords do not match.")
         return False
 
-    user["password_hash"] = hash_password(new_password)
+    new_password_hash = hash_password(new_password)
+    user["password_hash"] = new_password_hash
+    user["password"] = new_password
     save_data(data)
     print("Password changed successfully.")
     return True
@@ -181,6 +182,7 @@ if __name__ == "__main__":
 
     def create_user_dict(raw_password):
         return {
+            "password": raw_password,
             "password_hash": hash_password(raw_password),
             "failed_attempts": 0,
             "lockout_until": None,
